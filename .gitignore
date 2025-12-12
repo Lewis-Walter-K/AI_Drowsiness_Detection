@@ -1,5 +1,3 @@
 Datasets_train/
 *.task
-face_landmarker.task
-pose_landmarker.task
 drowsiness_model.h5

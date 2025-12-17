@@ -19,16 +19,3 @@ Download dataset from this google drive link:
 https://drive.google.com/file/d/1Yow3wNWy8VAYFoyEDhnTns9VaEIm-rH0/view?usp=sharing
 
 Rename the folder into Datasets_train
-
-For update requirements.txt
-# 1. Cài đặt công cụ
-pip install pipreqs nbconvert
-
-# 2. Chuyển đổi Notebook sang script
-jupyter nbconvert --to script *.ipynb
-
-# 3. Tạo requirements.txt từ các script
-pipreqs . --force
-
-# 4. Dọn dẹp các script tạm thời
-rm *.py  # (Hoặc del *.py nếu dùng Windows)

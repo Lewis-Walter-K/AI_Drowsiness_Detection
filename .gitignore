@@ -3,3 +3,7 @@ Datasets_train/
 drowsiness_model.h5
 desktop.ini
 previews
+Datasets_ReRecorded/
+Datasets_ReRecorded/Awake
+Datasets_ReRecorded/Yawning
+Datasets_ReRecorded/Sleep

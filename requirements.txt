@@ -1,4 +1,4 @@
-mediapipe
+mediapipe==0.10.21
 numpy
 opencv_contrib_python
 opencv_python
@@ -8,4 +8,4 @@ scipy
 tensorflow
 matplotlib
 seaborn
-
+ipykernel

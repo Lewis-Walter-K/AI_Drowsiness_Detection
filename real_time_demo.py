@@ -6,17 +6,19 @@ import os
 import joblib
 import tensorflow as tf
 from scipy.spatial import distance as dist
+import glob # <--- NEW IMPORT FOR MODEL LOADING
+from collections import deque  # <--- NEW IMPORT FOR SMOOTHING
 
 try:
     import mediapipe as mp
     TASKS_AVAILABLE = True
 except Exception:
-    import mediapipe as mp
+    print("Warning: MediaPipe not installed or conflicting file 'mediapipe.py' found.")
     TASKS_AVAILABLE = False
 
 # --- Constants & Config ---
-MODEL_PATH = './model/best_drowsiness_model.keras' 
-SCALER_PATH = 'scaler.pkl' 
+MODEL_FOLDER = './model'
+SCALER_PATH = 'scaler.pkl'
 
 LABELS = {0: "AWAKE", 1: "SLEEP", 2: "YAWNING"}
 COLORS = {0: (0, 255, 0), 1: (0, 0, 255), 2: (0, 165, 255)} # Green, Red, Orange
@@ -30,8 +32,11 @@ DEFAULT_SLUMP = 0.8
 DEFAULT_TILT = 0.0
 DUMMY_VALUE = 0.0
 
-# --- CONFIG FOR SENSITIVITY ---
-PREDICTION_INTERVAL = 1.0  # Seconds between predictions
+# --- SENSITIVITY CONFIG ---
+# Buffer Length: 30 frames is approx 1 second of "Memory".
+# Increase to 60 for more stability (slower response).
+# Decrease to 15 for faster response (less stable).
+SMOOTHING_BUFFER_SIZE = 15 
 
 # --- Load Model & Scaler ---
 print(f"Loading Scaler from {SCALER_PATH}...")
@@ -42,10 +47,22 @@ except Exception as e:
     print(f"FATAL ERROR: Could not load scaler.pkl. {e}")
     exit()
 
-print(f"Loading Model from {MODEL_PATH}...")
+print(f"Searching for model in {MODEL_FOLDER}...")
+
+# 1. Find all .keras files in the folder
+model_files = glob.glob(os.path.join(MODEL_FOLDER, "*.keras"))
+
+if not model_files:
+    print(f"FATAL ERROR: No .keras model found in {MODEL_FOLDER}")
+    exit()
+
+# 2. Pick the first one found (or you could sort by date/name)
+MODEL_PATH = model_files[0]
+print(f"Found Model: {MODEL_PATH}")
+
 try:
     model = tf.keras.models.load_model(MODEL_PATH)
-    print("Model Loaded!")
+    print("Model Loaded Successfully!")
 except Exception as e:
     print(f"FATAL ERROR: Could not load model. {e}")
     exit()
@@ -140,11 +157,14 @@ def run_demo(camera_index=0):
     mp_drawing = mp.solutions.drawing_utils
     mp_drawing_styles = mp.solutions.drawing_styles 
     
-    # --- Prediction State Variables (For Interval Logic) ---
-    last_prediction_time = time.time() - PREDICTION_INTERVAL # Force immediate start
-    current_status_text = "INITIALIZING"
+    # --- Persistence Variables ---
+    current_status = "INITIALIZING"
     current_conf = 0.0
-    current_status_color = (200, 200, 200)
+    current_color = (200, 200, 200)
+
+    # --- SMOOTHING BUFFER ---
+    # Stores the raw probabilities (e.g., [0.1, 0.8, 0.1]) of the last X frames
+    prediction_buffer = deque(maxlen=SMOOTHING_BUFFER_SIZE)
 
     with mp_face_mesh.FaceMesh(refine_landmarks=True, max_num_faces=1) as face_mesh, \
          mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as pose:
@@ -192,41 +212,41 @@ def run_demo(camera_index=0):
                 flms = face_results.multi_face_landmarks[0].landmark if face_disp else None
                 d_slump, r_tilt = calculate_slump_geometry(plms, flms, w, h, overlay)
 
-            # --- 3. PREDICTION LOGIC (WITH INTERVAL) ---
-            current_time = time.time()
+            # --- 3. PREDICTION LOGIC (ROLLING AVERAGE) ---
             
             if not face_disp:
                 # Immediate override if no face
-                current_status_text = "NO DETECTION"
-                current_status_color = (100, 100, 100)
+                # We clear the buffer so old "awake" frames don't delay the "No Detection" alert
+                prediction_buffer.clear()
+                current_status = "NO DETECTION"
+                current_color = (100, 100, 100)
                 current_conf = 0.0
             else:
-                # Only predict if 1 second has passed since last time
-                if (current_time - last_prediction_time) >= PREDICTION_INTERVAL:
-                    
-                    # Prepare Vector
-                    input_features = np.array([[ear, mar, pitch, yaw, roll, d_slump, r_tilt]])
-                    scaled_features = scaler.transform(input_features)
-                    
-                    # Predict
-                    preds = model.predict(scaled_features, verbose=0)[0] 
-                    idx = np.argmax(preds)
-                    
-                    # Update State Variables
-                    current_status_text = LABELS[idx]
-                    current_conf = preds[idx]
-                    current_status_color = COLORS[idx]
-                    
-                    # Reset Timer
-                    last_prediction_time = current_time
-                else:
-                    # Do nothing, just keep displaying the 'current_*' variables from previous loop
-                    pass
+                # Prepare Vector
+                input_features = np.array([[ear, mar, pitch, yaw, roll, d_slump, r_tilt]])
+                scaled_features = scaler.transform(input_features)
+                
+                # Predict Probabilities (e.g., [0.1, 0.8, 0.1])
+                preds = model.predict(scaled_features, verbose=0)[0] 
+                
+                # Add to Buffer
+                prediction_buffer.append(preds)
+                
+                # Calculate Average across the buffer
+                # Axis 0 means average down the columns (average all 'Awake' scores, etc.)
+                avg_preds = np.mean(prediction_buffer, axis=0)
+                
+                # Get the label with the highest AVERAGE probability
+                idx = np.argmax(avg_preds)
+                
+                current_status = LABELS[idx]
+                current_conf = avg_preds[idx]
+                current_color = COLORS[idx]
 
             # --- 4. DISPLAY ---
             # Big Result on Top
-            cv2.putText(overlay, f"{current_status_text} ({current_conf*100:.1f}%)", (50, 80), 
-                        cv2.FONT_HERSHEY_SIMPLEX, 1.5, current_status_color, 4)
+            cv2.putText(overlay, f"{current_status} ({current_conf*100:.1f}%)", (50, 80), 
+                        cv2.FONT_HERSHEY_SIMPLEX, 1.5, current_color, 4)
 
             # Detailed Stats List
             lines = [
@@ -239,14 +259,14 @@ def run_demo(camera_index=0):
                 f"Tilt:  {r_tilt:.1f}" if pose_disp else f"Tilt: {r_tilt} (Default)",
                 f"Face: {face_disp} | Body: {pose_disp}",
                 "----------------",
-                f"STATUS: {current_status_text}"
+                f"STATUS: {current_status}"
             ]
             
             # Draw stats
             for i, line in enumerate(lines):
-                color = (200, 200, 200) # Default Gray
+                color = (0, 0, 0) 
                 if "STATUS" in line:
-                    color = current_status_color
+                    color = current_color
                 
                 y_pos = h - 280 + (i * 25)
                 cv2.putText(overlay, line, (10, y_pos), cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)

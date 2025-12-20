@@ -6,3 +6,5 @@ previews
 Datasets_ReRecorded/
 Additional_Dataset/
 additional_previews/
+*.json
+*.keras

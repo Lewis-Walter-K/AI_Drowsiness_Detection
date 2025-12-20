@@ -1,3 +1,4 @@
+import glob
 import time
 import math
 import cv2
@@ -17,8 +18,8 @@ except Exception:
     TASKS_AVAILABLE = False
 
 # --- Constants & Config ---
-MODEL_PATH = './model/best_drowsiness_model.keras' 
-SCALER_PATH = 'scaler.pkl' 
+MODEL_FOLDER = './model'
+SCALER_PATH = 'scaler1.pkl'
 
 LABELS = {0: "AWAKE", 1: "SLEEP", 2: "YAWNING"}
 COLORS = {0: (0, 255, 0), 1: (0, 0, 255), 2: (0, 165, 255)} # Green, Red, Orange
@@ -38,24 +39,35 @@ DUMMY_VALUE = 0.0
 # Muốn delay 2 giây mới báo Sleep -> Cần window size khoảng 60 frames.
 # Tuy nhiên để UI mượt hơn, ta để window tầm 15-30 frame là vừa đủ lọc nhiễu blink.
 
-WINDOW_SIZE = 20
-THRESHOLD_RATIO = 0.6 # Trạng thái phải chiếm 60% trong window mới được coi là thật
-FAST_AWAKE_FRAMES = 5 #  Chỉ cần 5 frame (0.15s) AWAKE liên tiếp để phá bỏ trạng thái ngủ
+WINDOW_SIZE = 10
+THRESHOLD_RATIO = 0.7 # Trạng thái phải chiếm 70% trong window mới được coi là thật
+FAST_AWAKE_FRAMES = 5 #  Chỉ cần 5 frames (0.15s) AWAKE liên tiếp để phá bỏ trạng thái ngủ
 
 # --- Load Model & Scaler ---
 print(f"Loading Scaler from {SCALER_PATH}...")
 try:
-    with open(SCALER_PATH, 'rb') as f: # Sửa lại cách load pickle chuẩn
-        scaler = joblib.load(SCALER_PATH)
-        print("Scaler Loaded!")
+    scaler = joblib.load(SCALER_PATH)
+    print("Scaler Loaded!")
 except Exception as e:
     print(f"FATAL ERROR: Could not load scaler.pkl. {e}")
     exit()
 
-print(f"Loading Model from {MODEL_PATH}...")
+print(f"Searching for model in {MODEL_FOLDER}...")
+
+# 1. Find all .keras files in the folder
+model_files = glob.glob(os.path.join(MODEL_FOLDER, "*.keras"))
+
+if not model_files:
+    print(f"FATAL ERROR: No .keras model found in {MODEL_FOLDER}")
+    exit()
+
+# 2. Pick the first one found (or you could sort by date/name)
+MODEL_PATH = model_files[0]
+print(f"Found Model: {MODEL_PATH}")
+
 try:
     model = tf.keras.models.load_model(MODEL_PATH)
-    print("Model Loaded!")
+    print("Model Loaded Successfully!")
 except Exception as e:
     print(f"FATAL ERROR: Could not load model. {e}")
     exit()
@@ -246,7 +258,7 @@ def run_demo(camera_index=0):
                 # để người dùng không thấy bị đơ.
                 elif len(prediction_history) < WINDOW_SIZE:
                         if final_label == "NO FACE DETECTION": # Chỉ override nếu trước đó là mất mặt
-                            final_label = predicted_label + "Calibrating..."
+                            final_label = predicted_label + " Calibrating..."
                             final_conf = preds[idx]
 
                 # Map lại màu sắc từ Label text

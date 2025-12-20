@@ -1,8 +1,0 @@
-{
-    "num_nodes": 128,
-    "dropout_prob": 0,
-    "learning_rate": 0.005,
-    "batch_size": 16,
-    "epochs": 67,
-    "val_loss": 0.08463
-}

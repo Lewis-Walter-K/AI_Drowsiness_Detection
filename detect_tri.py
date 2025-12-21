@@ -19,7 +19,7 @@ except Exception:
 
 # --- Constants & Config ---
 MODEL_FOLDER = './model'
-SCALER_PATH = 'scaler1.pkl'
+SCALER_PATH = 'scaler.pkl'
 
 LABELS = {0: "AWAKE", 1: "SLEEP", 2: "YAWNING"}
 COLORS = {0: (0, 255, 0), 1: (0, 0, 255), 2: (0, 165, 255)} # Green, Red, Orange
@@ -40,7 +40,7 @@ DUMMY_VALUE = 0.0
 # Tuy nhiên để UI mượt hơn, ta để window tầm 15-30 frame là vừa đủ lọc nhiễu blink.
 
 WINDOW_SIZE = 10
-THRESHOLD_RATIO = 0.7 # Trạng thái phải chiếm 70% trong window mới được coi là thật
+THRESHOLD_RATIO = 0.8 # Trạng thái phải chiếm 70% trong window mới được coi là thật
 FAST_AWAKE_FRAMES = 5 #  Chỉ cần 5 frames (0.15s) AWAKE liên tiếp để phá bỏ trạng thái ngủ
 
 # --- Load Model & Scaler ---

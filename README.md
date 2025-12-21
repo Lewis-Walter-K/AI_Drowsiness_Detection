@@ -29,7 +29,9 @@ pip install -r requirements.txt
 ```
 
 ### MODEL
-Install the model "final.keras" in this drive: https://drive.google.com/drive/folders/1STUndLaRnW6XeYyLTRPyuKVHd7rDajq0?usp=drive_link
+Install the model "best_drowsiness_model.keras" in this drive: https://drive.google.com/drive/folders/1STUndLaRnW6XeYyLTRPyuKVHd7rDajq0?usp=sharing
+
+__REMEMBER TO__: Install the scaler model "scaler.pkl" in this drive: https://drive.google.com/drive/folders/1STUndLaRnW6XeYyLTRPyuKVHd7rDajq0?usp=sharing
 
 
 ### RUN PROJECT 
@@ -39,9 +41,13 @@ python real_time_demo.py
 
 ## RETRAIN THE MODEL (OPTIONAL)
 #### Dataset 
-Install avaliable dataset from this drive:
-https://drive.google.com/file/d/1lW5qbV35a8EKQNMUuYhgIlfyGk5FGVL2/view?usp=sharing
-
+* Install avaliable image dataset from this drive: https://drive.google.com/drive/folders/1lwmFuWgpB5Sabd7uk9gv7wSP8wOyjUck?usp=drive_link
+* Install final.csv from this drive if you don't want to process image and only train model: https://drive.google.com/drive/folders/1lwmFuWgpB5Sabd7uk9gv7wSP8wOyjUck?usp=drive_link
+### PROCESS YOUR DATA FOR TRAINING DATA (OPTIONAL)
+run this code:
+```bash
+jupyter notebook process_data.ipynb 
+```
 #### COLLECT YOUR OWN DATASET (OPTIONAL)
 run this python file: 
 ```bash
@@ -54,15 +60,14 @@ Choose mode:
  By clicking "SPACEBAR" it will record 20 frame per second. Make the face of a person status based on the mode selected.
 
  ### Train your model
- After collecting your dataset -> Process your dataset
+ After collecting your dataset or installing image dataset (OPTIONAL) -> Process your dataset
  ```bash
 jupyter notebook process_data.ipynb
 ```
-Then train your model
+Then use the "final.csv" to train your model
 ```bash
 jupyter notebook model_Khang.ipynb
 ```
-
 
 ## Limitations
 * __Lighting condition__: The system heavily relies on Mediapipe model visibility to facial and posture landmarks. Performance may degrade in low-light or infrared enviroments.

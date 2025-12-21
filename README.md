@@ -40,7 +40,7 @@ python real_time_demo.py
 ## RETRAIN THE MODEL (OPTIONAL)
 #### Dataset 
 Install avaliable dataset from this drive:
-https://drive.google.com/drive/folders/1lwmFuWgpB5Sabd7uk9gv7wSP8wOyjUck?usp=drive_link
+https://drive.google.com/file/d/1lW5qbV35a8EKQNMUuYhgIlfyGk5FGVL2/view?usp=sharing
 
 #### COLLECT YOUR OWN DATASET (OPTIONAL)
 run this python file: 
@@ -70,11 +70,13 @@ jupyter notebook model_Khang.ipynb
 * __Posture Blockage__: Scarf or too much layer surrounding the neck and upper-chest area may interfere with MAR and EAR calculation
 ## Demo
 
-Insert gif or link to demo
-
+![alt text](Khang_demo.gif)
+![alt text](Tri_demo.gif)
 
 ## Authors
-* __Author__: Nguyễn Thịnh Khang & Nguyễn Đình Trí 
+* __Author__: Nguyễn Thịnh Khang & Nguyễn Đình Trí
+* __Group__: Nguyễn Thịnh Khang - Nguyễn Đình Trí - Nguyễn Quốc Thái - Nguyễn Duy Khánh - Hồ Đức Nhật Hoàng  
+ 
 
 ## Reference
 * https://doi.org/10.1007/978-981-16-5987-4_63

@@ -36,7 +36,7 @@ __REMEMBER TO__: Install the scaler model "scaler.pkl" in this drive: https://dr
 
 ### RUN PROJECT 
 ```bash
-python real_time_demo.py
+python detect_tri.py
 ```
 
 ## RETRAIN THE MODEL (OPTIONAL)
